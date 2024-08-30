@@ -37,9 +37,21 @@ def clean_phone_number(phone)
   return "Wrong number"
 end
 
-def most_active_hour(hours)
-  hours.map! { |x| DateTime.strptime(x, '%m/%d/%y %H:%M').hour }
+def most_active_hour(reg_date)
+  hours = reg_date.map { |x| DateTime.strptime(x, '%m/%d/%y %H:%M').hour }
   return hours.max_by { |i| hours.count(i) }
+end
+
+def most_active_day(reg_date)
+  days = reg_date.map { |x| Date.strptime(x, '%m/%d/%y %H:%M').wday }
+  week_days = { 0 => "Sunday",
+                1 => "Monday", 
+                2 => "Tuesday",
+                3 => "Wednesday",
+                4 => "Thursday",
+                5 => "Friday",
+                6 => "Saturday" }
+  return week_days[ days.max_by { |i| days.count(i) } ]
 end
 
 puts 'EventManager initialized.'
@@ -52,19 +64,20 @@ contents = CSV.open(
 
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
-hours_list = Array.new
+reg_date = Array.new
 
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
   zipcode = clean_zipcode(row[:zipcode])
   phone = clean_phone_number(row[:homephone])
-  hours_list << row[:regdate]
+  reg_date << row[:regdate]
   legislators = legislators_by_zipcode(zipcode)
 
   form_letter = erb_template.result(binding)
 
-  #save_thank_you_letter(id,form_letter)
+  save_thank_you_letter(id,form_letter)
 end
 
-puts "The most active hour: #{most_active_hour(hours_list)}"
+puts "The most active hour: #{most_active_hour(reg_date)}"
+puts "The most active day: #{most_active_day(reg_date)}"
